@@ -1,42 +1,57 @@
-# Advanced Sample Hardhat Project
+# Customizable ERC20 Clone Factory
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+## [0] Setup
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+### 1. Clone the repository
 
-Try running some of the following tasks:
+`$ git clone https://github.com/Frenchkebab/ERC20Clone.git`
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.js
-node scripts/deploy.js
-npx eslint '**/*.js'
-npx eslint '**/*.js' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
+### 2. Install dependencies
+
+`$ npm install`
+
+## [1] Contracts
+
+```
+contracts
+├── ERC20CloneFactory.sol
+└── ERC20Implementation.sol
 ```
 
-# Etherscan verification
+### ERC20Implementation.sol
 
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
+Simple implementation of upgradeable ERC20 contract
 
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
+### ERC20CloneFactory.sol
 
-```shell
-hardhat run --network ropsten scripts/deploy.js
+```solidity
+function clone(string calldata _name, string calldata _symbol, uint256 _cap) external returns (address) {
+    address clone = Clones.clone(implementation);
+    ERC20Implementation(clone).initialize(_name, _symbol, msg.sender, _cap);
+
+    emit Clone(msg.sender, clone);
+    return clone;
+}
 ```
 
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
+Contract that lets users create new ERC20 tokens.
+Can customize its `name`, `symbol`, `cap`, and `owner`.
 
-```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
+
+## [2] test
+
+`npx hardhat test`
+
+### result
+
 ```
+  ERC20 Clone
+    ✔ should make an instance with expected parameters (82ms)
+
+  Clone Pattern vs Creating New Contract
+            Create : 1860350 gas
+            Clone  :  196645 gas
+            Diff   : 1663705 gas
+    ✔ Compare Gas Cost (287ms)
+```
+
